@@ -1,25 +1,37 @@
-"""FastAPI application for chord recognition.
-
-POST /recognize  — upload a WAV file, get back a list of chord segments.
-
-Run with:
-    uv run uvicorn chord_rec.api:app --reload
-"""
-
 import tempfile
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from chord_rec.chromagram import ChromagramConfig, compute_chromagram
 from chord_rec.recognition import ChordRecognizer, ChordSegment, RecognizerConfig, decode_chord_sequence
 
-app = FastAPI(title="Chord Recognition API", version="0.1.0")
+router = APIRouter()
 
 
-@app.post("/recognize", response_model=list[ChordSegment])
+@router.get("/")
+def root() -> dict:
+    """API information."""
+    return {
+        "name": "Chord Recognition API",
+        "version": "0.1.0",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": [
+            {"method": "POST", "path": "/recognize", "description": "Recognize chords in a WAV file"},
+        ],
+    }
+
+
+@router.get("/health")
+def health() -> dict:
+    """Health check."""
+    return {"status": "ok"}
+
+
+@router.post("/recognize", response_model=list[ChordSegment])
 async def recognize(
     file: UploadFile = File(..., description="Audio file (.wav)"),
     version: Literal["STFT", "CQT", "IIR"] = Form("CQT"),

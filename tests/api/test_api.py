@@ -27,6 +27,17 @@ def _make_wav(duration_s: float = 1.0, sample_rate: int = 22050) -> bytes:
 WAV_BYTES = _make_wav()
 
 
+class TestRootAndHealth:
+    def test_root_returns_200(self):
+        assert client.get("/").status_code == 200
+
+    def test_root_contains_name(self):
+        assert "Chord Recognition API" in client.get("/").json()["name"]
+
+    def test_health_returns_ok(self):
+        assert client.get("/health").json() == {"status": "ok"}
+
+
 class TestRecognizeEndpoint:
     def test_returns_200(self):
         resp = client.post(
