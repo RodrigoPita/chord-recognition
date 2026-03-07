@@ -4,13 +4,24 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from scipy.linalg import circulant
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 import libfmp.c3
 
 from chord_rec.constants import FUNDAMENTALS, CHORDAL_TYPES, TEMPLATES_IN_C
 
 
 ChordSet = Literal['basic', 'extended']
+
+
+class ChordSegment(BaseModel):
+    start: float
+    end: float
+    label: str
+
+    @computed_field
+    @property
+    def duration(self) -> float:
+        return round(self.end - self.start, 6)
 
 
 class RecognizerConfig(BaseModel):
@@ -309,6 +320,51 @@ def matrix_chord24_trans_inv(A: np.ndarray) -> np.ndarray:
     A_ti[12:24, 0:12] = matrix_circular_mean(A[12:24, 0:12])
     A_ti[12:24, 12:24] = matrix_circular_mean(A[12:24, 12:24])
     return A_ti
+
+
+def decode_chord_sequence(
+    chord_matrix: np.ndarray,
+    chord_labels: list[str],
+    Fs_X: float,
+) -> list[ChordSegment]:
+    """Convert a binary chord matrix into a list of timed chord segments.
+
+    Consecutive frames with the same chord are merged into a single segment.
+
+    Args:
+        chord_matrix: Binary matrix of shape (num_chords x N_frames), e.g.
+            the HMM output from ChordRecognizer.recognize().
+        chord_labels: Ordered list of chord label strings matching the matrix rows.
+        Fs_X: Feature rate in Hz used to convert frame indices to seconds.
+
+    Returns:
+        List of ChordSegment, each with start/end times in seconds and a label.
+    """
+    frame_indices = np.argmax(chord_matrix, axis=0)
+    segments: list[ChordSegment] = []
+    if len(frame_indices) == 0:
+        return segments
+
+    current_label = chord_labels[frame_indices[0]]
+    start_frame = 0
+
+    for i in range(1, len(frame_indices)):
+        label = chord_labels[frame_indices[i]]
+        if label != current_label:
+            segments.append(ChordSegment(
+                start=round(start_frame / Fs_X, 6),
+                end=round(i / Fs_X, 6),
+                label=current_label,
+            ))
+            current_label = label
+            start_frame = i
+
+    segments.append(ChordSegment(
+        start=round(start_frame / Fs_X, 6),
+        end=round(len(frame_indices) / Fs_X, 6),
+        label=current_label,
+    ))
+    return segments
 
 
 class ChordRecognizer:
