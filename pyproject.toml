@@ -11,6 +11,10 @@ dependencies = [
     "numba",
     "libfmp",
     "pydantic",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "httpx",
 ]
 
 [project.optional-dependencies]
