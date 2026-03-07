@@ -119,8 +119,9 @@ def main() -> None:
 
     # --- Plot (optional) ---
     if args.plot:
-        import matplotlib.pyplot as plt
+        import matplotlib
         import matplotlib.patches as mpatches
+        import matplotlib.pyplot as plt
         import numpy as np
 
         unique_labels = list(dict.fromkeys(seg.label for seg in segments))
@@ -146,7 +147,14 @@ def main() -> None:
         ax.set_yticks([])
         ax.set_title(f'Chord recognition — {args.audio.name}')
         plt.tight_layout()
-        plt.show()
+
+        if matplotlib.get_backend() == 'agg' or not matplotlib.is_interactive():
+            plot_path = args.audio.with_suffix('.png')
+            fig.savefig(plot_path, dpi=150)
+            print(f'\nPlot saved to: {plot_path}')
+        else:
+            plt.show()
+        plt.close(fig)
 
 
 if __name__ == '__main__':
