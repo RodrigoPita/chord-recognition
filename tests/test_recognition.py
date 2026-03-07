@@ -4,8 +4,10 @@ import pytest
 
 from chord_rec.recognition import (
     ChordRecognizer,
+    ChordSegment,
     RecognizerConfig,
     chord_recognition_template,
+    decode_chord_sequence,
     edit_diagonal,
     generate_chord_templates,
     get_chord_labels,
@@ -232,3 +234,56 @@ class TestChordRecognizer:
             steps=5,
         )
         assert recognizer.config.p == original_p
+
+
+class TestDecodeChordSequence:
+    def _matrix_from_sequence(self, sequence: list[str], labels: list[str]) -> np.ndarray:
+        matrix = np.zeros((len(labels), len(sequence)), dtype=int)
+        for frame, label in enumerate(sequence):
+            matrix[labels.index(label), frame] = 1
+        return matrix
+
+    def test_single_chord_throughout(self):
+        labels = ['C', 'Am', 'F', 'G']
+        matrix = self._matrix_from_sequence(['C'] * 10, labels)
+        segments = decode_chord_sequence(matrix, labels, Fs_X=10.0)
+        assert len(segments) == 1
+        assert segments[0].label == 'C'
+        assert segments[0].start == 0.0
+        assert segments[0].end == pytest.approx(1.0)
+
+    def test_two_chords(self):
+        labels = ['C', 'Am', 'F', 'G']
+        matrix = self._matrix_from_sequence(['C'] * 5 + ['Am'] * 5, labels)
+        segments = decode_chord_sequence(matrix, labels, Fs_X=10.0)
+        assert len(segments) == 2
+        assert segments[0].label == 'C'
+        assert segments[1].label == 'Am'
+        assert segments[0].end == pytest.approx(segments[1].start)
+
+    def test_segments_cover_full_duration(self):
+        labels = ['C', 'Am', 'F', 'G']
+        sequence = ['C', 'C', 'Am', 'Am', 'F', 'G']
+        matrix = self._matrix_from_sequence(sequence, labels)
+        Fs_X = 2.0
+        segments = decode_chord_sequence(matrix, labels, Fs_X=Fs_X)
+        assert segments[0].start == 0.0
+        assert segments[-1].end == pytest.approx(len(sequence) / Fs_X)
+
+    def test_duration_computed_correctly(self):
+        labels = ['C', 'Am']
+        matrix = self._matrix_from_sequence(['C'] * 4, labels)
+        segments = decode_chord_sequence(matrix, labels, Fs_X=2.0)
+        assert segments[0].duration == pytest.approx(2.0)
+
+    def test_returns_chord_segment_instances(self):
+        labels = ['C', 'Am']
+        matrix = self._matrix_from_sequence(['C', 'Am'], labels)
+        segments = decode_chord_sequence(matrix, labels, Fs_X=1.0)
+        assert all(isinstance(s, ChordSegment) for s in segments)
+
+    def test_empty_matrix_returns_empty_list(self):
+        labels = ['C', 'Am']
+        matrix = np.zeros((2, 0), dtype=int)
+        segments = decode_chord_sequence(matrix, labels, Fs_X=10.0)
+        assert segments == []
