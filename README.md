@@ -83,6 +83,42 @@ best_p = recognizer.find_best_p(X, ann_matrix)
 print(f"Best p: {best_p:.2f}")
 ```
 
+### CLI
+
+```bash
+uv run python scripts/recognize.py audio.wav
+uv run python scripts/recognize.py audio.wav --version CQT --chord-set extended
+uv run python scripts/recognize.py audio.wav --annotation labels.csv   # evaluate
+uv run python scripts/recognize.py audio.wav --output chords.csv       # save results
+uv run python scripts/recognize.py audio.wav --plot                    # chord timeline
+```
+
+### REST API
+
+```bash
+uv run uvicorn chord_rec.api:app --reload
+```
+
+Then `POST /recognize` with a multipart form upload:
+
+```bash
+curl -X POST http://localhost:8000/recognize \
+  -F "file=@audio.wav" \
+  -F "version=CQT" \
+  -F "chord_set=basic"
+```
+
+Returns a JSON array of chord segments:
+
+```json
+[
+  {"start": 0.0, "end": 2.32, "label": "D", "duration": 2.32},
+  {"start": 2.32, "end": 6.31, "label": "C#m", "duration": 3.99}
+]
+```
+
+Interactive API docs are available at `http://localhost:8000/docs`.
+
 ## Project structure
 
 ```
@@ -94,7 +130,10 @@ chord-recognition/
 │       ├── chromagram.py    # Chromagram computation (STFT, CQT, IIR)
 │       ├── recognition.py   # Template recognition, Viterbi, ChordRecognizer
 │       ├── evaluation.py    # Precision/recall/F-measure, annotation parsing
-│       └── plotting.py      # Visualisation helpers
+│       ├── plotting.py      # Visualisation helpers
+│       └── api.py           # FastAPI application (POST /recognize)
+├── scripts/
+│   └── recognize.py         # CLI for running recognition on a local file
 ├── data/
 │   ├── audios/              # WAV files (gitignored)
 │   ├── labels/              # Chord annotation CSV files
