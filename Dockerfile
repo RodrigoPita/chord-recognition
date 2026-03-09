@@ -29,4 +29,7 @@ EXPOSE 7860
 # Smoke-test: fail the build if the app can't be imported (catches hang-on-import issues)
 RUN /app/.venv/bin/python -c "from chord_rec.api import app; print('import OK')"
 
-CMD ["/app/.venv/bin/uvicorn", "chord_rec.api:app", "--host", "0.0.0.0", "--port", "7860", "--log-level", "info"]
+COPY start.sh ./
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
