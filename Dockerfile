@@ -29,5 +29,5 @@ EXPOSE 7860
 # Smoke-test: fail the build if the app can't be imported (catches hang-on-import issues)
 RUN /app/.venv/bin/python -c "from chord_rec.api import app; print('import OK')"
 
-# DIAGNOSTIC: bare Python HTTP server — no deps, confirms port binding works
-CMD ["python", "-c", "import http.server, os; print('DIAG: binding port 7860', flush=True); http.server.HTTPServer(('0.0.0.0', int(os.environ.get('PORT',7860))), http.server.SimpleHTTPRequestHandler).serve_forever()"]
+# DIAGNOSTIC: hardcoded port, no env lookup, no external deps
+CMD ["python3", "-m", "http.server", "7860", "--bind", "0.0.0.0"]
