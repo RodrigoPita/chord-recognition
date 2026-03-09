@@ -18,7 +18,12 @@ ENV PORT=7860
 ENV PATH="/app/.venv/bin:$PATH"
 # Ensure Python output is not buffered so logs appear in HF Spaces
 ENV PYTHONUNBUFFERED=1
+# Prevent music21 (libfmp dependency) from making network calls on first import,
+# which can hang indefinitely inside a container
+ENV M21_USE_INTERNET="no"
+# Provide a writable home dir for numba/music21 caches
+ENV HOME=/tmp
 
 EXPOSE 7860
 
-CMD uvicorn chord_rec.api:app --host 0.0.0.0 --port "${PORT}"
+CMD ["/app/.venv/bin/uvicorn", "chord_rec.api:app", "--host", "0.0.0.0", "--port", "7860", "--log-level", "info"]
