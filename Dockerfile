@@ -23,10 +23,13 @@ ENV PYTHONUNBUFFERED=1
 ENV M21_USE_INTERNET="no"
 # Provide a writable home dir for numba/music21 caches
 ENV HOME=/tmp
+# Disable numba JIT — LLVM initialization hangs/crashes in HF Spaces sandboxed containers
+ENV NUMBA_DISABLE_JIT=1
 
 EXPOSE 7860
 
-# Smoke-test: fail the build if the app can't be imported (catches hang-on-import issues)
+# Smoke-test: import the app to catch startup hangs/crashes at build time
+# ENV vars above are inherited here, so this runs under the same conditions as CMD
 RUN /app/.venv/bin/python -c "from chord_rec.api import app; print('import OK')"
 
 CMD ["uvicorn", "chord_rec.api:app", "--host", "0.0.0.0", "--port", "7860"]
