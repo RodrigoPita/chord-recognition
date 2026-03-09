@@ -26,7 +26,16 @@ class ChordSegment(BaseModel):
 
 class RecognizerConfig(BaseModel):
     chord_set: ChordSet = 'basic'
-    p: float = Field(0.15, ge=0.0, le=1.0)
+    p: float = Field(
+        0.15,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "HMM self-transition probability. Controls how likely the model is to stay "
+            "on the same chord versus switching to a new one. Higher values produce "
+            "smoother, longer segments; lower values allow more frequent changes."
+        ),
+    )
 
 
 def get_chord_labels(

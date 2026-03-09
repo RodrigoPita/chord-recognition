@@ -1,3 +1,13 @@
+---
+title: Chord Recognition
+emoji: 🎸
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # chord-recognition
 
 A chord recognition library focused on complex harmonies found in MPB, Bossa Nova, and Jazz. Built on top of the [Fundamentals of Music Processing (FMP)](https://www.audiolabs-erlangen.de/resources/MIR/FMP/C5/C5.html) modules by Meinard Müller.

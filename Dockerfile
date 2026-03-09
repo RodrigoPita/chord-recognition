@@ -13,8 +13,10 @@ RUN uv sync --no-dev --frozen
 COPY src/ src/
 RUN uv sync --no-dev --frozen
 
-EXPOSE 8000
-
+# HF Spaces requires port 7860; override with PORT env var for local use
+ENV PORT=7860
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uvicorn", "chord_rec.api:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 7860
+
+CMD uvicorn chord_rec.api:app --host 0.0.0.0 --port "${PORT}"

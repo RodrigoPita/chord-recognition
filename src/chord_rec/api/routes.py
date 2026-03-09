@@ -36,7 +36,16 @@ async def recognize(
     file: UploadFile = File(..., description="Audio file (.wav)"),
     version: Literal["STFT", "CQT", "IIR"] = Form("CQT"),
     chord_set: Literal["basic", "extended"] = Form("basic"),
-    p: float = Form(0.15, ge=0.0, le=1.0),
+    p: float = Form(
+        0.15,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "HMM self-transition probability. Controls how likely the model is to stay "
+            "on the same chord versus switching to a new one. Higher values produce "
+            "smoother, longer segments; lower values allow more frequent changes."
+        ),
+    ),
 ) -> JSONResponse:
     """Recognize chords in an uploaded audio file."""
     if not file.filename or not file.filename.lower().endswith(".wav"):
