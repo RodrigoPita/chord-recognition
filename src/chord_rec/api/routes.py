@@ -5,9 +5,6 @@ from typing import Literal
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from chord_rec.chromagram import ChromagramConfig, compute_chromagram
-from chord_rec.recognition import ChordRecognizer, ChordSegment, RecognizerConfig, decode_chord_sequence
-
 router = APIRouter()
 
 
@@ -31,7 +28,7 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@router.post("/recognize", response_model=list[ChordSegment])
+@router.post("/recognize")
 async def recognize(
     file: UploadFile = File(..., description="Audio file (.wav)"),
     version: Literal["STFT", "CQT", "IIR"] = Form("CQT"),
@@ -48,6 +45,11 @@ async def recognize(
     ),
 ) -> JSONResponse:
     """Recognize chords in an uploaded audio file."""
+    # Heavy imports (librosa, numba, libfmp) are deferred to here so uvicorn
+    # can bind the port immediately at startup without waiting for them.
+    from chord_rec.chromagram import ChromagramConfig, compute_chromagram
+    from chord_rec.recognition import ChordRecognizer, RecognizerConfig, decode_chord_sequence
+
     if not file.filename or not file.filename.lower().endswith(".wav"):
         raise HTTPException(status_code=422, detail="Only .wav files are supported.")
 
