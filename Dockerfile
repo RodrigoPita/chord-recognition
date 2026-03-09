@@ -16,6 +16,8 @@ RUN uv sync --no-dev --frozen
 # HF Spaces requires port 7860; override with PORT env var for local use
 ENV PORT=7860
 ENV PATH="/app/.venv/bin:$PATH"
+# Ensure Python output is not buffered so logs appear in HF Spaces
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 7860
 
