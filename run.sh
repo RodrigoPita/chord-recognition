@@ -37,7 +37,8 @@ echo
 
 docker run --rm \
     --name "${CONTAINER_NAME}" \
-    -p "${PORT}:8000" \
+    -p "${PORT}:7860" \
+    -e PORT=7860 \
     "${IMAGE_NAME}:${TAG}" &
 
 DOCKER_PID=$!
