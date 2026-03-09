@@ -29,12 +29,19 @@ if [[ -z "${HF_USERNAME}" ]]; then
     exit 1
 fi
 
-HF_REMOTE="https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+HF_REMOTE="git@hf.co:spaces/${HF_USERNAME}/${SPACE_NAME}"
+HF_SPACE_URL="https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
 
 echo
-echo -e "  ${BOLD}Space${RESET}  : ${CYAN}${HF_REMOTE}${RESET}"
+echo -e "  ${BOLD}Space${RESET}  : ${CYAN}${HF_SPACE_URL}${RESET}"
 echo -e "  ${BOLD}Branch${RESET} : main"
 echo
+
+# --- Ensure hf.co is in known hosts ---
+if ! ssh-keygen -F hf.co &>/dev/null; then
+    echo -e "${YELLOW}▶ Adding hf.co to known hosts${RESET}"
+    ssh-keyscan hf.co >> ~/.ssh/known_hosts 2>/dev/null
+fi
 
 # --- Check the remote exists or inform the user to create it ---
 echo -e "${YELLOW}▶ Checking git remote${RESET}"
@@ -76,7 +83,7 @@ echo -e "${GREEN}${BOLD}✔ Pushed successfully${RESET}"
 echo
 echo -e "  ${BOLD}Your Space${RESET}"
 echo -e "  ${DIM}──────────────────────────────────────${RESET}"
-echo -e "  ${CYAN}${HF_REMOTE}${RESET}"
+echo -e "  ${CYAN}${HF_SPACE_URL}${RESET}"
 echo
 echo -e "  ${DIM}HF will now build and deploy your Docker image.${RESET}"
 echo -e "  ${DIM}This takes a few minutes on first deploy.${RESET}"
