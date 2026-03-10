@@ -14,6 +14,8 @@ A chord recognition library focused on complex harmonies found in MPB, Bossa Nov
 
 Originally developed as a Computer Science graduation thesis (TCC) at UFRJ.
 
+**Live API:** [https://rodrigopita-chord-recognition.hf.space](https://rodrigopita-chord-recognition.hf.space) — interactive docs at [/docs](https://rodrigopita-chord-recognition.hf.space/docs)
+
 ## Features
 
 - Three chromagram front-ends: **STFT**, **CQT**, and **IIR**
@@ -105,6 +107,21 @@ uv run python scripts/recognize.py audio.wav --plot                    # chord t
 
 ### REST API
 
+#### Hosted (HuggingFace Spaces)
+
+The API is deployed at **https://rodrigopita-chord-recognition.hf.space**. Interactive docs: [/docs](https://rodrigopita-chord-recognition.hf.space/docs).
+
+```bash
+curl -X POST https://rodrigopita-chord-recognition.hf.space/recognize \
+  -F "file=@audio.wav" \
+  -F "version=CQT" \
+  -F "chord_set=basic"
+```
+
+Note: the first request after a period of inactivity may take ~20 seconds as the free-tier container wakes up and numba JIT-compiles on first use.
+
+#### Local
+
 ```bash
 uv run uvicorn chord_rec.api:app --reload
 ```
@@ -128,6 +145,34 @@ Returns a JSON array of chord segments:
 ```
 
 Interactive API docs are available at `http://localhost:8000/docs`.
+
+## Deploying to HuggingFace Spaces
+
+The API is packaged as a Docker Space. To deploy your own copy:
+
+1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space), selecting **Docker** as the SDK and setting `app_port: 7860` in the README front-matter.
+
+2. Add the HF Space as a git remote:
+   ```bash
+   git remote add hf https://huggingface.co/spaces/<your-username>/<your-space-name>
+   ```
+
+3. Push:
+   ```bash
+   git push hf main
+   ```
+
+HF will build the Docker image and start the container automatically on every push.
+
+**Key requirements for the Dockerfile:**
+- Create a user with uid 1000 and switch to it before the `CMD` — HF Spaces enforces this and will silently refuse to schedule the container otherwise:
+  ```dockerfile
+  RUN useradd -m -u 1000 user
+  # ... install deps ...
+  USER user
+  ```
+- Bind uvicorn to `0.0.0.0`, not `localhost`.
+- Set `HOME` to the user's home directory so numba and other libraries can write their caches.
 
 ## Project structure
 
